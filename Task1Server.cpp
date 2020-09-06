@@ -1,10 +1,8 @@
 #include <iostream>
 #include <fstream>
-#include "string"
 using namespace std;
 
 struct request {
-    string name;
     int weight;
     int height;
 };
@@ -20,33 +18,32 @@ int get_file_size() {
     return size;
 }
 
-int send_response(response* response_struct) {
+int send_response(response response_struct) {
     ofstream file("responses", ios::binary | ios::app);
     file.write ((char*)&response_struct, sizeof(response));
     file.close();
     return 0;
 }
 
-double analyzeBMI(request* request_struct) {
-    return ((double)request_struct->weight)/
-        (request_struct->height)/(request_struct->height)*10000;
+double calcBMI(request request_struct) {
+    return ((double)request_struct.weight)/
+        (request_struct.height)/(request_struct.height)*10000;
 }
 
-response* create_response(double bmi) {
-    response* resp = new response;
-    resp->bmi = bmi;
+response create_response(double bmi) {
+    response resp;
+    resp.bmi = bmi;
     return resp;
 }
 
-int show_request(request* response_struct) {
-    cout << "Name: " << response_struct->name << endl;
-    cout << "Weight: " << response_struct->weight << endl;
-    cout << "Height: " << response_struct->height << endl;
+int show_request(request response_struct) {
+    cout << "Weight: " << response_struct.weight << endl;
+    cout << "Height: " << response_struct.height << endl;
     return 0;
 }
 
-request* get_request(int read_from) {
-    request* req = new request;
+request get_request(int read_from) {
+    request req;
     ifstream file("requests", ios::binary);
     file.seekg(read_from);
     file.read((char*)&req, sizeof(request));
@@ -54,23 +51,17 @@ request* get_request(int read_from) {
 }
 
 int handle_request(int last_size) {
-    request* new_req = get_request(last_size);
+    request new_req = get_request(last_size);
     show_request(new_req);
-    double bmi = analyzeBMI(new_req);
-    response* resp = create_response(bmi);
+    double bmi = calcBMI(new_req);
+    response resp = create_response(bmi);
     send_response(resp);
     return last_size + sizeof(request);
 }
 
 int main() {
-    int last_size = get_file_size();
-    while (true) {
-        if (last_size > get_file_size()) 
-            last_size = handle_request(last_size);
-
-        //sleep()
-    }
-
-
+    //cout << get_file_size() << endl;
+    handle_request(16);
     return 0;
 }
+
