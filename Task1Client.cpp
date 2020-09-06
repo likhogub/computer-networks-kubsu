@@ -1,6 +1,10 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 using namespace std;
+
+const char REQUESTS[] = "requests";
+const char RESPONSES[] = "responses";
 
 struct request {
     int weight;
@@ -12,17 +16,16 @@ struct response{
 };
 
 int get_file_size() {
-    ifstream file("responses", ios::binary | ios::ate);
+    ifstream file(RESPONSES, ios::binary | ios::ate);
     int size = file.tellg();
     file.close();
     return size;
 }
 
-int send_request(request student) {
-    ofstream file("requests", ios::binary | ios::app);
-    file.write ((char*)&student, sizeof (request));
+void send_request(request *student) {
+    ofstream file(REQUESTS, ios::binary | ios::app);
+    file.write ((char*)student, sizeof (request));
     file.close();
-    return 0;
 }
 
 string analyzeBMI(double bmi) {
@@ -31,33 +34,50 @@ string analyzeBMI(double bmi) {
     return "normal";
 }
 
-int show_response(response response_struct) {
-    cout << "Your BodyMassIndex is " << response_struct.bmi << endl;
-    cout << "It is " << analyzeBMI(response_struct.bmi) << endl;
-    return 0;
-}
-
-request create_request(int weight, int height) {
-    request req;
-    req.weight = weight;
-    req.height = height;
-    return req;
-}
-
-response get_response(int read_from) {
-    response resp;
-    ifstream file("responses", ios::binary);
-    file.seekg(read_from);
-    file.read((char*)&resp, sizeof(response));
+response* get_response(int start_from) {
+    response* resp = new response;
+    ifstream file(RESPONSES, ios::binary);
+    file.seekg(start_from);
+    file.read((char*)resp, sizeof(response));
     return resp;
 }
 
+void show_response(response* resp) {
+    cout << "Your BodyMassIndex is " << resp->bmi << endl;
+    cout << "It is " << analyzeBMI(resp->bmi) << endl;
+}
+
+request* create_request(int weight, int height) {
+    request* req = new request;
+    req->weight = weight;
+    req->height = height;
+    return req;
+}
+
+int handle_response(int last_size) {
+    response* resp = get_response(last_size);
+    show_response(resp);
+    return sizeof(response);
+}
 
 int main(){
-    int height = 181;
-    int weight = 85;
+    while (true) {
+        int height;
+        int weight;
 
-    send_request(create_request(weight, height));
+        cout << "Enter your height (cm): ";
+        cin >> height;
+        cout << "Enter your weight (kg): ";
+        cin >> weight;
+        send_request(create_request(weight, height));
 
+        int last_size = get_file_size();
+        while (true) {
+            if (last_size < get_file_size()) {
+                last_size += handle_response(last_size);
+                break;
+            }
+        }
+    }
     return 0;
 }
