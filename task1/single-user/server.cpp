@@ -1,24 +1,37 @@
 #include <iostream>
 #include <fstream>
+#include <string.h>
 #include <math.h>
 using namespace std;
 
 const char REQUESTS[] = "requests";
 const char RESPONSES[] = "responses";
+const int MAX_DIAGNOSIS_LENGTH = 25;
 
 struct request {
-    int weight;
-    int height;
+    double weight;
+    double height;
 };
 
 struct response{
     double bmi;
+    char diagnosis[MAX_DIAGNOSIS_LENGTH];
 };
+
+void println(char* char_arr_ptr) {
+    int i = 0;
+    while (char_arr_ptr[i] != '\0') {
+        cout << char_arr_ptr[i];
+        i++;
+    }
+    cout << endl;
+}
 
 int get_file_size() {
     ifstream file(REQUESTS, ios::binary | ios::ate);
     int size = file.tellg();
     file.close();
+    if (size == -1) return 0;
     return size;
 }
 
@@ -28,17 +41,21 @@ void send_response(response* response_struct) {
     file.close();
 }
 
-double calcBMI(request* req) {
-    int height = req->height;
-    int weight = req->weight;
-    double h = ((double)height)/100;
-    double w = (double)weight;
+double calcBMI(double h, double w) {
+    h /= 100;
     return w/(h*h);
 }
 
-response* create_response(double bmi) {
+char* analyzeBMI(double bmi) {
+    if (bmi < 18.6) return "underweight";
+    if (bmi > 25) return "overweight";
+    return "normal";
+}
+
+response* create_response(request* req) {
     response* resp = new response;
-    resp->bmi = bmi;
+    resp->bmi = calcBMI(req->height, req->weight);
+    strcpy(resp->diagnosis, analyzeBMI(resp->bmi));
     return resp;
 }
 
@@ -56,10 +73,9 @@ request* get_request(int start_from) {
 }
 
 int handle_request(int last_size) {
-    request* new_req = get_request(last_size);
-    show_request(new_req);
-    double bmi = calcBMI(new_req);
-    response* resp = create_response(bmi);
+    request* req = get_request(last_size);
+    show_request(req);
+    response* resp = create_response(req);
     send_response(resp);
     return sizeof(request);
 }

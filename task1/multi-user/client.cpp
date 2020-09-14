@@ -72,8 +72,8 @@ void handle_response(char* name, int last_size) {
 
 int main(){
     while (true) {
-        int height;
-        int weight;
+        double height;
+        double weight;
         char name[MAX_NAME_LENGTH];
         cout << "Enter your name: ";
         cin >> name;

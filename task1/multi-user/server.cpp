@@ -5,7 +5,6 @@
 using namespace std;
 
 const char REQUESTS[] = "requests";
-//const char RESPONSES[] = "responses";
 const int MAX_NAME_LENGTH = 50;
 const int MAX_DIAGNOSIS_LENGTH = 25;
 
