@@ -1,8 +1,1 @@
-
-task1/single-user/server.exe
-
-task1/single-user/client.exe
-
-task1/single-user/requests
-
-task1/single-user/responses
+*.exe
