@@ -7,17 +7,20 @@ const char REQUESTS[] = "requests";
 const char RESPONSES[] = "responses";
 const int MAX_NAME_LENGTH = 50;
 const int MAX_DIAGNOSIS_LENGTH = 25;
+const int HASH_LENGTH = 25;
 
 struct request {
     char name[MAX_NAME_LENGTH];
     double weight;
     double height;
+    char hash[HASH_LENGTH];
 };
 
 struct response{
     char name[MAX_NAME_LENGTH];
     double bmi;
     char diagnosis[MAX_DIAGNOSIS_LENGTH];
+    char hash[HASH_LENGTH];
 };
 
 void println(char* char_arr_ptr) {
@@ -29,8 +32,8 @@ void println(char* char_arr_ptr) {
     cout << endl;
 }
 
-int get_file_size(char* name) {
-    ifstream file(name, ios::binary | ios::ate);
+int get_file_size(char* hash) {
+    ifstream file(hash, ios::binary | ios::ate);
     int size = file.tellg();
     file.close();
     if (size == -1) return 0;
@@ -43,9 +46,9 @@ void send_request(request *student) {
     file.close();
 }
 
-response* get_response(char* name, int start_from) {
+response* get_response(char* hash, int start_from) {
     response* resp = new response;
-    ifstream file(name, ios::binary);
+    ifstream file(hash, ios::binary);
     file.seekg(start_from);
     file.read((char*)resp, sizeof(response));
     return resp;
@@ -57,20 +60,31 @@ void show_response(response* resp) {
     println(resp->diagnosis);
 }
 
-request* create_request(char* name, int weight, int height) {
+request* create_request(char* hash, char* name, int weight, int height) {
     request* req = new request;
+    strcpy(req->hash, hash);
     strcpy(req->name, name);
     req->weight = weight;
     req->height = height;
     return req;
 }
 
-void handle_response(char* name, int last_size) {
-    response* resp = get_response(name, last_size);
+void handle_response(char* hash, int last_size) {
+    response* resp = get_response(hash, last_size);
     show_response(resp);
 }
 
+char* getHash() {
+    char* hash = new char[HASH_LENGTH];
+    for (int i = 0; i < HASH_LENGTH - 1; i++) {
+        hash[i] = (char)(65 + (rand() % 26));
+    }
+    hash[HASH_LENGTH - 1] = '\0';
+    return hash;
+}
+
 int main(){
+    char* hash = getHash();
     while (true) {
         double height;
         double weight;
@@ -81,14 +95,13 @@ int main(){
         cin >> height;
         cout << "Enter your weight (kg): ";
         cin >> weight;
-
-        int last_size = get_file_size(name);
-        send_request(create_request(name, weight, height));
+        int last_size = get_file_size(hash);
+        send_request(create_request(hash, name, weight, height));
         cout << "Awaiting..." << endl;
         while (true) {
-            if (last_size < get_file_size(name)) {
-                handle_response(name, last_size);
-                last_size = get_file_size(name);
+            if (last_size < get_file_size(hash)) {
+                handle_response(hash, last_size);
+                last_size = get_file_size(hash);
                 break;
             }
         }

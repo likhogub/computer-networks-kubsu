@@ -7,17 +7,21 @@ using namespace std;
 const char REQUESTS[] = "requests";
 const int MAX_NAME_LENGTH = 50;
 const int MAX_DIAGNOSIS_LENGTH = 25;
+const int HASH_LENGTH = 25;
+
 
 struct request {
     char name[MAX_NAME_LENGTH];
     double weight;
     double height;
+    char hash[HASH_LENGTH];
 };
 
 struct response{
     char name[MAX_NAME_LENGTH];
     double bmi;
     char diagnosis[MAX_DIAGNOSIS_LENGTH];
+    char hash[HASH_LENGTH];
 };
 
 void println(char* char_arr_ptr) {
@@ -38,7 +42,7 @@ int get_file_size() {
 }
 
 void send_response(response* response_struct) {
-    ofstream file(response_struct->name, ios::binary | ios::app);
+    ofstream file(response_struct->hash, ios::binary | ios::app);
     file.write ((char*)response_struct, sizeof(response));
     file.close();
 }
@@ -57,16 +61,18 @@ char* analyzeBMI(double bmi) {
 response* create_response(request* req) {
     response* resp = new response;
     resp->bmi = calcBMI(req->height, req->weight);
+    strcpy(resp->hash, req->hash);
     strcpy(resp->name, req->name);
     strcpy(resp->diagnosis, analyzeBMI(resp->bmi));
     return resp;
 }
 
-void show_request(request* resp) {
-    cout << "Weight: ";
-    println(resp->name);
-    cout << "Weight: " << resp->weight << endl;
-    cout << "Height: " << resp->height << endl;
+void show_request(request* req) {
+    cout << "Hash: " << req->hash << endl;
+    cout << "Name: ";
+    println(req->name);
+    cout << "Weight: " << req->weight << endl;
+    cout << "Height: " << req->height << endl;
 }
 
 request* get_request(int start_from) {
