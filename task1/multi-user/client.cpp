@@ -84,6 +84,7 @@ char* getHash() {
 }
 
 int main(){
+    srand(time(0));
     char* hash = getHash();
     while (true) {
         double height;
