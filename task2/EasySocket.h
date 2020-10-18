@@ -44,7 +44,7 @@ int createSocket() {
     return sock;
 }
 
-/*Binds socket to "localhost:port:*/
+/*Binds socket to "localhost:PORT:*/
 int bindSocket(int sock, int port) {
     struct sockaddr_in sock_prop;
     sock_prop.sin_family = AF_INET;
@@ -66,7 +66,7 @@ int listenSocket(int sock, int queue=-1) {
     return 0;
 }
 
-/*Connects socket to "address:port"*/
+/*Connects socket to "ADDRESS:PORT"*/
 int connectSocket(int sock, char* address, int port) {
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
