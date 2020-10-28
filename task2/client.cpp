@@ -1,17 +1,22 @@
-#include "EasySocket.h"
 #include <iostream>
+#include "EasySocket.h"
 using namespace std;
 
-char buf[] = "hello world";
-char address[] = "127.0.0.1";
+struct stud {
+    int first;
+    int second;
+};
 
 int main() {
-    int sock = createSocket();
-    connectSocket(sock, address, 1234);
-    char buf[16];
-    while (true) {
-        cin >> buf;    
-        sendData(sock, buf);
-        cout << receiveData(sock) << endl;
-    }
+    Socket sock = createSocketTCP();
+    SocketProps* props = createSocketProps(4321);
+    connectSocket(sock, props);
+
+    stud s;
+    s.first = 5;
+    s.second = 77;
+
+    sendDataTCP(sock, (char*)&s);
+
+    return 0;
 }

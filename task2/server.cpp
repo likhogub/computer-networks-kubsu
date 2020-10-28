@@ -1,13 +1,22 @@
+#include <iostream>
 #include "EasySocket.h"
+using namespace std;
 
-char buf[] = "hello world2";
+struct stud {
+    int first;
+    int second;
+};
 
 int main() {
-    int sock = createSocket();
-    bindSocket(sock, 1234);
+    Socket sock = createSocketTCP();
+    SocketProps* props = createSocketProps(4321);
+    bindSocket(sock, props);
     listenSocket(sock);
-    int conn = acceptSocket(sock);
-    while (true) {
-        sendData(conn, receiveData(conn));
-    }
+    Socket conn = acceptSocket(sock);
+
+    stud* w = (stud*)receiveDataTCP(conn);
+    cout << w->first << endl;
+    cout << w->second << endl;    
+
+    return 0;
 }

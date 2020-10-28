@@ -4,29 +4,93 @@
 #include <string.h>
 #include <iostream>
 
-#define PACKAGE_SIZE 32
+using namespace std;
 
-/*Receives and returns data from fd*/
-char* receiveData(int fd, int bytes=PACKAGE_SIZE) {
-    char* buffer = new char[bytes];
-    memset(buffer, 0, sizeof(buffer));
-    int c = 0;
-    int tmp = 0;
-    while (c < bytes) {
-        tmp = recv(fd, buffer + c, 1, 0);
-        if (tmp == -1) {
-            perror("Receiving error");
-            exit(-1);
-        }
-        c += tmp;
-        if (tmp == 0) break;
+int PACKAGE_SIZE = 32;
+
+
+char LOCALHOST[]  = "127.0.0.1";
+
+typedef sockaddr_in SocketProps;
+typedef int Socket;
+
+Socket createSocketTCP() {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        perror("TCP socket creating error");
+        exit(-1);
     }
-    return buffer;
+    return sock;
 }
 
-/*Sends data from buffer to fd*/
-int sendData(int fd, char* buffer, int bytes=PACKAGE_SIZE) {
-    int len = send(fd, buffer, bytes, 0);
+Socket createSocketUDP() {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1) {
+        perror("UDP socket creating error");
+        exit(-1);
+    }
+    return sock;
+}
+
+SocketProps* createSocketProps(char* address, int port) {
+    SocketProps* socketProps = new SocketProps;
+    memset(socketProps, 0, sizeof(*socketProps));
+    socketProps->sin_family = AF_INET;
+    socketProps->sin_port = htons(port);
+    socketProps->sin_addr.s_addr = inet_addr(address);
+    return socketProps;
+}
+
+SocketProps* createSocketProps(int port) {
+    return createSocketProps(LOCALHOST, port);
+}
+
+SocketProps* createSocketProps() {
+    SocketProps* socketProps = new SocketProps;
+    return socketProps;
+}
+
+Socket listenSocket(Socket sock, int queueLength=-1) {
+    if (-1 == listen(sock, queueLength)) {
+        perror("Socket listen error");
+        exit(-1);
+    }
+    return 0;
+}
+
+Socket bindSocket(Socket sock, SocketProps* socketProps) {
+    if (-1 == bind(sock, (sockaddr* )socketProps, sizeof(*socketProps))) {
+        perror("Socket bind error");
+        exit(-1);
+    }
+    return sock;
+}
+
+Socket connectSocket(Socket sock, SocketProps* socketProps) {
+    if (-1 == connect(sock, (sockaddr *)socketProps, sizeof(*socketProps))) {
+        perror("Socket connection error");
+        exit(-1);
+    }
+    return sock;
+}
+
+Socket acceptSocket(Socket sock, SocketProps *socketProps) {
+    socklen_t socketPropsSize = sizeof(*socketProps);
+    Socket acceptedSocket = accept(sock, (sockaddr*)socketProps, &socketPropsSize);
+    if (acceptedSocket == -1) {
+        perror("Socket accept error");
+        exit(-1);
+    }
+    return acceptedSocket;
+}
+
+Socket acceptSocket(Socket sock) {
+    SocketProps* socketProps = new SocketProps;
+    return acceptSocket(sock, socketProps);
+}
+
+int sendDataTCP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
+    int len = send(sock, buffer, bytes, 0);
     if (len == -1) {
         perror("Sending error");
         exit(-1);
@@ -34,60 +98,34 @@ int sendData(int fd, char* buffer, int bytes=PACKAGE_SIZE) {
     return len;
 }
 
-/*Returns new socket fd*/
-int createSocket() {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {
-        perror("Socket creating error");
-        exit(-1);
-    }
-    return sock;
+int sendDataUDP(Socket sock, SocketProps* socketProps, char* buf, int bytes=PACKAGE_SIZE) {
+    return sendto(sock, buf, sizeof(buf), 0, (sockaddr*)socketProps, sizeof(*socketProps));
 }
 
-/*Binds socket to "localhost:PORT:*/
-int bindSocket(int sock, int port) {
-    struct sockaddr_in sock_prop;
-    sock_prop.sin_family = AF_INET;
-    sock_prop.sin_port = htons(port);
-    sock_prop.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (-1 == bind(sock, (struct sockaddr* )&sock_prop, sizeof(sock_prop))) {
-        perror("Bind error");
+char* receiveDataTCP(Socket sock, int bytes=PACKAGE_SIZE) {
+    char* buffer = new char[bytes];
+    memset(buffer, 0, sizeof(buffer));
+    int tmp = recv(sock, buffer, bytes, 0);
+    if (tmp == -1) {
+        perror("TCP Receiving error");
         exit(-1);
     }
-    return 0;
+    return buffer;
 }
 
-/*Toggles listening for fd*/
-int listenSocket(int sock, int queue=-1) {
-    if (-1 == listen(sock, queue)) {
-        perror("Listen error");
+char* receiveDataUDP(Socket sock, SocketProps* socketProps, int bytes=PACKAGE_SIZE) {
+    char* buffer = new char[bytes];
+    memset(buffer, 0, sizeof(buffer));
+    socklen_t socketPropsSize = sizeof(*socketProps);
+    int tmp = recvfrom(sock, buffer, bytes, 0, (sockaddr*)socketProps, &socketPropsSize);
+    if (tmp == -1) {
+        perror("UDP Receiving error");
         exit(-1);
     }
-    return 0;
+    return buffer;
 }
 
-/*Connects socket to "ADDRESS:PORT"*/
-int connectSocket(int sock, char* address, int port) {
-    struct sockaddr_in servaddr;
-    memset(&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(port);  
-    servaddr.sin_addr.s_addr = inet_addr(address);  
-    if (-1 == connect(sock, (struct sockaddr *)&servaddr, sizeof(servaddr))) {
-        perror("Connection error");
-        exit(-1);
-    }
-    return 0;
-}
-
-/*Accepts new connection and returns fd*/
-int acceptSocket(int sock) {
-    struct sockaddr_in client_addr;
-    socklen_t length = sizeof(client_addr);
-    int new_conn_fd = accept(sock, (struct sockaddr*)&client_addr, &length);
-    if (new_conn_fd == -1) {
-        perror("Accept error");
-        exit(-1);
-    }
-    return new_conn_fd;
+char* receiveDataUDP(Socket sock, int bytes=PACKAGE_SIZE) {
+    SocketProps* socketProps = createSocketProps();
+    return receiveDataUDP(sock, socketProps, bytes);
 }
