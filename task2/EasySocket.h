@@ -1,12 +1,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 
 using namespace std;
 
-int PACKAGE_SIZE = 32;
+int PACKAGE_SIZE = 64;
 
 
 char LOCALHOST[]  = "127.0.0.1";
@@ -24,7 +25,7 @@ Socket createSocketTCP() {
 }
 
 Socket createSocketUDP() {
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    int sock = socket(AF_INET, SOCK_DGRAM, SO_REUSEADDR || SO_REUSEPORT);
     if (sock == -1) {
         perror("UDP socket creating error");
         exit(-1);
@@ -67,11 +68,7 @@ Socket bindSocket(Socket sock, SocketProps* socketProps) {
 }
 
 Socket connectSocket(Socket sock, SocketProps* socketProps) {
-    if (-1 == connect(sock, (sockaddr *)socketProps, sizeof(*socketProps))) {
-        perror("Socket connection error");
-        exit(-1);
-    }
-    return sock;
+    return connect(sock, (sockaddr *)socketProps, sizeof(*socketProps));
 }
 
 Socket acceptSocket(Socket sock, SocketProps *socketProps) {
@@ -102,30 +99,26 @@ int sendDataUDP(Socket sock, SocketProps* socketProps, char* buf, int bytes=PACK
     return sendto(sock, buf, sizeof(buf), 0, (sockaddr*)socketProps, sizeof(*socketProps));
 }
 
-char* receiveDataTCP(Socket sock, int bytes=PACKAGE_SIZE) {
-    char* buffer = new char[bytes];
-    memset(buffer, 0, sizeof(buffer));
+int receiveDataTCP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
     int tmp = recv(sock, buffer, bytes, 0);
     if (tmp == -1) {
         perror("TCP Receiving error");
         exit(-1);
     }
-    return buffer;
+    return tmp;
 }
 
-char* receiveDataUDP(Socket sock, SocketProps* socketProps, int bytes=PACKAGE_SIZE) {
-    char* buffer = new char[bytes];
-    memset(buffer, 0, sizeof(buffer));
+int receiveDataUDP(Socket sock, SocketProps* socketProps, char* buffer, int bytes=PACKAGE_SIZE) {
     socklen_t socketPropsSize = sizeof(*socketProps);
     int tmp = recvfrom(sock, buffer, bytes, 0, (sockaddr*)socketProps, &socketPropsSize);
     if (tmp == -1) {
         perror("UDP Receiving error");
         exit(-1);
     }
-    return buffer;
+    return tmp;
 }
 
-char* receiveDataUDP(Socket sock, int bytes=PACKAGE_SIZE) {
+int receiveDataUDP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
     SocketProps* socketProps = createSocketProps();
-    return receiveDataUDP(sock, socketProps, bytes);
+    return receiveDataUDP(sock, socketProps, buffer, bytes);
 }
