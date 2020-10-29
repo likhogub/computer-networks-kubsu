@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int PACKAGE_SIZE = 64;
+int PACKAGE_SIZE = 128;
 
 
 char LOCALHOST[]  = "127.0.0.1";
@@ -25,7 +25,7 @@ Socket createSocketTCP() {
 }
 
 Socket createSocketUDP() {
-    int sock = socket(AF_INET, SOCK_DGRAM, SO_REUSEADDR || SO_REUSEPORT);
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
         perror("UDP socket creating error");
         exit(-1);
@@ -96,7 +96,7 @@ int sendDataTCP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
 }
 
 int sendDataUDP(Socket sock, SocketProps* socketProps, char* buf, int bytes=PACKAGE_SIZE) {
-    return sendto(sock, buf, sizeof(buf), 0, (sockaddr*)socketProps, sizeof(*socketProps));
+    return sendto(sock, buf, bytes, 0, (sockaddr*)socketProps, sizeof(*socketProps));
 }
 
 int receiveDataTCP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
