@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string.h>
 #include <math.h>
-#include "../EasySocket.h"
+#include "../../EasySocket.h"
 using namespace std;
 
 const int MAX_DIAGNOSIS_LENGTH = 25;
@@ -38,6 +38,7 @@ int handle_response() {
     int tmp = get_response(resp);
     if (tmp == 0) return -1;
     show_response(resp);
+    return tmp;
 }
 
 int main() {

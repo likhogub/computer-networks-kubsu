@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string.h>
 #include <math.h>
-#include "../EasySocket.h"
+#include "../../EasySocket.h"
 using namespace std;
 
 const int MAX_DIAGNOSIS_LENGTH = 25;
