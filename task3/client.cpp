@@ -1,35 +1,41 @@
 #include "../EasySocket.h"
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <netdb.h>
-
 using namespace std;
 
-char request[] = "GET /json-ru.html HTTP/1.0\r\nHost: www.json.org\r\n\r\n";
+string getRequestHeader(string address, int port) {
+    stringstream requestHeader;
+    requestHeader << "GET / HTTP/1.0\r\nHost: " << address << ":" << port << "\r\n\r\n";
+    return requestHeader.str();
+}
 
-int main() {
-    hostent *host;
-    host = gethostbyname("www.json.org");
-    in_addr ad = *(in_addr*)host->h_addr_list[0];
+int main(int argc, char** args) {
+    string address = "localhost";
+    int port = 80;
+    if (argc == 3) {
+        address = args[1];
+        port = atoi(args[2]);
+    }
+
+
+    hostent* host = gethostbyname(address.c_str());
+    in_addr addr = *(in_addr*)host->h_addr_list[0];
+    string ip_address = inet_ntoa(addr);
     
-    char* str_address = inet_ntoa(ad);
-    cout << str_address << endl;
 
-    Socket sock = createSocketTCP();
-    SocketProps *props = createSocketProps(str_address, 80);
+    Socket serverSock = createSocketTCP();
+    SocketProps *serverProps = createSocketProps(ip_address.c_str(), port);
+    connectSocket(serverSock, serverProps);
 
-    connectSocket(sock, props);
-    sendDataTCP(sock, request, sizeof(request));
-    
-    char lol[100000] = {0};
-    int recvBytes = 0;
-    int totalBytes = 0;
-    do {
-        recvBytes = receiveDataTCP(sock, lol+totalBytes, 1);
-        totalBytes += recvBytes;
-    } while (recvBytes != 0);
+    string request = getRequestHeader(address, port);
+    sendDataTCP(serverSock, request.c_str(), request.length());
 
-    cout << lol << endl;
+    char buffer[100000] = {0};
+    receiveDataTCP(serverSock, buffer, 100000);
+
+    cout << buffer << endl;
 
     return 0;
 }
