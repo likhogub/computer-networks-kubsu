@@ -3,8 +3,15 @@
 #include <string.h>
 #include <math.h>
 #include <pthread.h>
+#include <mutex>
 #include "../EasySocket.h"
 using namespace std;
+
+int requestCounter = 0;
+mutex requestCounterMutex;
+
+int threadCounter = 0;
+mutex threadCounterMutex;
 
 const int MAX_DIAGNOSIS_LENGTH = 25;
 
@@ -68,12 +75,25 @@ int handle_request(Socket clientSock) {
 }
 
 void* clientThread(void* clientSock) {
+    threadCounterMutex.lock();
+    threadCounter++;
+    cout << "Threads: " << threadCounter << endl;
+    threadCounterMutex.unlock();
     while (1) {
         if (-1 == handle_request(*(Socket*)clientSock)) {
             cout << "Connection lost" << endl;
             break;
+        } else {
+            requestCounterMutex.lock();
+            requestCounter++;
+            cout << "Requests: " << requestCounter << endl;
+            requestCounterMutex.unlock();
         }
     }
+    threadCounterMutex.lock();
+    threadCounter--;
+    cout << "Threads: " << threadCounter << endl;
+    threadCounterMutex.unlock();
     close(*(Socket*)clientSock);
     return 0;
 }

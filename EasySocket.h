@@ -101,10 +101,12 @@ int sendDataUDP(Socket sock, SocketProps* socketProps, const char* buf, int byte
 
 int receiveDataTCP(Socket sock, char* buffer, int bytes=PACKAGE_SIZE) {
     int tmp = recv(sock, buffer, bytes, 0);
+    /*
     if (tmp == -1) {
         perror("TCP Receiving error");
         exit(-1);
     }
+    */
     return tmp;
 }
 
